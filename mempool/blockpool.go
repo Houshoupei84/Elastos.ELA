@@ -11,7 +11,7 @@ import (
 	"github.com/elastos/Elastos.ELA/core/types/payload"
 	"github.com/elastos/Elastos.ELA/events"
 )
-
+//区块池
 type BlockPool struct {
 	Chain *blockchain.BlockChain
 

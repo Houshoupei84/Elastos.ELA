@@ -14,12 +14,12 @@ type ViewListener interface {
 }
 
 type view struct {
-	signTolerance time.Duration
-	viewStartTime time.Time
-	isDposOnDuty  bool
-	arbitrators   interfaces.Arbitrators
+	signTolerance time.Duration   //签名容忍期
+	viewStartTime time.Time       //视图开始时间
+	isDposOnDuty  bool            //???????作用
+	arbitrators   interfaces.Arbitrators//Arbitrators管理接口
 
-	listener ViewListener
+	listener ViewListener         //ViewListener视图接口 接收视图改变的
 }
 
 func (v *view) IsOnDuty() bool {

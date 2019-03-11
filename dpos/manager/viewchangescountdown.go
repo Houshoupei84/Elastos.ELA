@@ -17,6 +17,7 @@ const (
 	othersTimeoutFactor = uint32(240)
 )
 
+//视图切换倒计时
 type ViewChangesCountDown struct {
 	dispatcher  *ProposalDispatcher
 	consensus   *Consensus

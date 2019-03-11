@@ -8,7 +8,7 @@ import (
 type ConsensusBlockCacheListener interface {
 	OnBlockAdded(b *types.Block)
 }
-
+//共识块的缓存
 type ConsensusBlockCache struct {
 	ConsensusBlocks    map[common.Uint256]*types.Block
 	ConsensusBlockList []common.Uint256

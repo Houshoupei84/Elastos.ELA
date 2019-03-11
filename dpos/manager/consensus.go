@@ -15,11 +15,11 @@ const (
 )
 
 type Consensus struct {
-	consensusStatus uint32
-	viewOffset      uint32
+	consensusStatus uint32     //共识状态consensusReady或者consensusRunning
+	viewOffset      uint32      //???
 
-	manager     *DPOSManager
-	currentView view
+	manager     *DPOSManager   //dpos管理器
+	currentView view           //当前视图
 }
 
 func NewConsensus(manager *DPOSManager, tolerance time.Duration,

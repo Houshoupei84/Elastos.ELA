@@ -15,12 +15,12 @@ import (
 )
 
 const WaitHeightTolerance = uint32(1)
-
+//不合法行为的监控
 type IllegalBehaviorMonitor struct {
-	dispatcher      *ProposalDispatcher
-	cachedProposals map[common.Uint256]*payload.DPOSProposal
+	dispatcher      *ProposalDispatcher						//一次提案 相关的数据。
+	cachedProposals map[common.Uint256]*payload.DPOSProposal//一次提案
 
-	evidenceCache evidenceCache
+	evidenceCache evidenceCache								//作恶的证据
 	manager       *DPOSManager
 
 	inactiveArbitratorsTxHash *common.Uint256

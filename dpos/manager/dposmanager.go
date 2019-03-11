@@ -20,11 +20,11 @@ import (
 )
 
 type DPOSNetworkConfig struct {
-	ProposalDispatcher *ProposalDispatcher
-	Store              interfaces.IDposStore
-	PublicKey          []byte
+	ProposalDispatcher *ProposalDispatcher    ////一次提案 相关的数据。
+	Store              interfaces.IDposStore  //IDposStore接口
+	PublicKey          []byte                 //公钥
 }
-
+//DPOSNetwork接口  开始 结束 广播消息等。
 type DPOSNetwork interface {
 	Initialize(dnConfig DPOSNetworkConfig)
 
@@ -85,22 +85,22 @@ type DPOSManagerConfig struct {
 	Arbitrators interfaces.Arbitrators
 	ChainParams *config.Params
 }
-
+//Dpos的核心类，
 type DPOSManager struct {
 	publicKey  []byte
-	blockCache *ConsensusBlockCache
+	blockCache *ConsensusBlockCache			//共识块的缓存
 
-	handler        *DPOSHandlerSwitch
-	network        DPOSNetwork
-	dispatcher     *ProposalDispatcher
-	consensus      *Consensus
-	illegalMonitor *IllegalBehaviorMonitor
+	handler        *DPOSHandlerSwitch		//
+	network        DPOSNetwork				//DPOSNetwork接口
+	dispatcher     *ProposalDispatcher      ////一次提案 相关的数据。
+	consensus      *Consensus               //共识
+	illegalMonitor *IllegalBehaviorMonitor  //不合法行为的监控
 
-	arbitrators interfaces.Arbitrators
-	blockPool   *mempool.BlockPool
-	txPool      *mempool.TxPool
-	chainParams *config.Params
-	broadcast   func(p2p.Message)
+	arbitrators interfaces.Arbitrators      //arbitrator管理类
+	blockPool   *mempool.BlockPool			//区块池
+	txPool      *mempool.TxPool             //交易池
+	chainParams *config.Params              //配置参数
+	broadcast   func(p2p.Message)           //???????
 }
 
 func (d *DPOSManager) AppendConfirm(confirm *payload.Confirm) (bool, bool, error) {

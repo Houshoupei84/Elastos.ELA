@@ -21,23 +21,29 @@ type ProducerState byte
 const (
 	// Pending indicates the producer is just registered and didn't get 6
 	// confirmations yet.
+	//刚注册 还没有达到6次确认的producer
 	Pending ProducerState = iota
 
 	// Activate indicates the producer is registered and confirmed by more than
 	// 6 blocks.
+	//已经注册 且确认超过6次
 	Activate
 
 	// Inactivate indicates the producer has been inactive for a period which shall
 	// be punished and will be activate later
+	//非激活状态 晚些时间会被惩罚 会被再次职位激活状态
 	Inactivate
 
 	// Canceled indicates the producer was canceled.
+	//producer 被取消
 	Canceled
 
 	// FoundBad indicates the producer was found doing bad.
+	//作恶
 	FoundBad
 
 	// ReturnedDeposit indicates the producer has canceled and returned deposit
+	//已经取消 且退换了押金
 	ReturnedDeposit
 )
 

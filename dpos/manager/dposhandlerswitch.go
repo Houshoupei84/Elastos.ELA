@@ -26,15 +26,15 @@ type DPOSEventConditionHandler interface {
 }
 
 type DPOSHandlerConfig struct {
-	Network     DPOSNetwork
+	Network     DPOSNetwork			////DPOSNetwork接口  开始 结束 广播消息等。
 	Manager     *DPOSManager
 	Monitor     *log.EventMonitor
 	Arbitrators interfaces.Arbitrators
 }
 
 type DPOSHandlerSwitch struct {
-	proposalDispatcher *ProposalDispatcher
-	consensus          *Consensus
+	proposalDispatcher *ProposalDispatcher	//一次提案 相关的数据
+	consensus          *Consensus           //共识
 	cfg                DPOSHandlerConfig
 
 	onDutyHandler  *DPOSOnDutyHandler

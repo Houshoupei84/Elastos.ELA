@@ -8,10 +8,11 @@ import (
 	"github.com/elastos/Elastos.ELA/dpos/log"
 )
 
+//Arbitrator的管理接口 IDposStore存储接口
 type EventStoreAnalyzerConfig struct {
 	InactiveEliminateCount uint32
-	Store                  interfaces.IDposStore
-	Arbitrators            interfaces.Arbitrators
+	Store                  interfaces.IDposStore  //IDposStore存储接口  负责存储相关的功能
+	Arbitrators            interfaces.Arbitrators //Arbitrators 是一个所有Arbitrator的管理接口
 }
 
 type EventStoreAnalyzer struct {

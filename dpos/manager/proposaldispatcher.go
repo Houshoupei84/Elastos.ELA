@@ -20,38 +20,38 @@ import (
 )
 
 type ProposalDispatcherConfig struct {
-	store.EventStoreAnalyzerConfig
-	EventMonitor *log.EventMonitor
-	Consensus    *Consensus
-	Network      DPOSNetwork
-	Manager      *DPOSManager
-	Account      account.DposAccount
-	ChainParams  *config.Params
+	store.EventStoreAnalyzerConfig   //dpos存储相关， arbiter管理相关
+	EventMonitor *log.EventMonitor   // 一组EventListener的管理
+	Consensus    *Consensus          //共识
+	Network      DPOSNetwork         //DPOSNetwork 接口
+	Manager      *DPOSManager        //DPOSManager扮演什么角色呢？
+	Account      account.DposAccount //接口处理提案签名 投票签名
+	ChainParams  *config.Params      //配置参数
 }
-
+//一次提案 相关的数据。
 type ProposalDispatcher struct {
 	cfg ProposalDispatcherConfig
 
-	processingBlock    *types.Block
-	processingProposal *payload.DPOSProposal
-	acceptVotes        map[common.Uint256]payload.DPOSProposalVote
-	rejectedVotes      map[common.Uint256]payload.DPOSProposalVote
-	pendingProposals   map[common.Uint256]payload.DPOSProposal
-	pendingVotes       map[common.Uint256]payload.DPOSProposalVote
+	processingBlock    *types.Block                                //区块
+	processingProposal *payload.DPOSProposal                       //一次提案
+	acceptVotes        map[common.Uint256]payload.DPOSProposalVote //接受的投票
+	rejectedVotes      map[common.Uint256]payload.DPOSProposalVote //拒绝的投票
+	pendingProposals   map[common.Uint256]payload.DPOSProposal     //阻塞的提案
+	pendingVotes       map[common.Uint256]payload.DPOSProposalVote //阻塞的投票
 
-	proposalProcessFinished bool
+	proposalProcessFinished bool								   //
 
-	inactiveCountDown           ViewChangesCountDown
-	currentInactiveArbitratorTx *types.Transaction
+	inactiveCountDown           ViewChangesCountDown			   //视图切换倒计时
+	currentInactiveArbitratorTx *types.Transaction                 //当前非激活arbitrator交易 ？？？做什么的呢
 
-	eventAnalyzer  *store.EventStoreAnalyzer
+	eventAnalyzer  *store.EventStoreAnalyzer                       //Arbitrator的管理接口 IDposStore存储接口
 	illegalMonitor *IllegalBehaviorMonitor
 }
 
 func (p *ProposalDispatcher) OnAbnormalStateDetected() {
 	p.RequestAbnormalRecovering()
 }
-
+//发现自己网络不佳，随机找个超级节点，向他发送RequestConsensus{Height: height} 带上自己的高度
 func (p *ProposalDispatcher) RequestAbnormalRecovering() {
 	height := p.CurrentHeight()
 	msgItem := &dmsg.RequestConsensus{Height: height}

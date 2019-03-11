@@ -42,12 +42,15 @@ func (cs ConnState) String() string {
 }
 
 // PeerAddr represent a connect peer's ID and it's IP address
+//PeerAddr 存储公钥ID 和IP地址（带端口的）
 type PeerAddr struct {
 	// PID is the peer's public key id.
+	//公钥ID [33]byte
 	PID peer.PID
 
 	// Addr is the peer's IP address.  It can be host:port format,
 	// or host only and use the DefaultPort passed by server config.
+	//IP 地址 host:port
 	Addr string
 }
 

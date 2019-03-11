@@ -7,14 +7,14 @@ import (
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/crypto"
 )
-
+//提案
 type DPOSProposal struct {
-	Sponsor    []byte
-	BlockHash  common.Uint256
-	ViewOffset uint32
-	Sign       []byte
+	Sponsor    []byte          //提案发起者
+	BlockHash  common.Uint256  //块的hash
+	ViewOffset uint32          //??????
+	Sign       []byte          //??????
 
-	hash *common.Uint256
+	hash *common.Uint256       //??????
 }
 
 func (p *DPOSProposal) Data() []byte {
