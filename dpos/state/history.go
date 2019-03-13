@@ -42,6 +42,7 @@ func (hc *heightChanges) rollback() {
 // history is a helper to log all producers and votes changes for state, so we
 // can handle block rollback by tracing the change history, no need to loop
 // though all transactions since the beginning of DPOS consensus.
+//记录所有的生产者 投票变化的状态。
 type history struct {
 	// capacity is the max block changes stored by history.
 	capacity int
@@ -65,6 +66,11 @@ type history struct {
 }
 
 // append add a change and it's rollback into history.
+/*
+height uint32 ： 块高
+execute		  ： 回调函数
+rollback      ： 回滚函数
+*/
 func (h *history) append(height uint32, execute func(), rollback func()) {
 	// if height==0 means this is a temporary change.
 	if height == 0 {
@@ -167,6 +173,7 @@ func (h *history) seekTo(height uint32) error {
 
 // rollbackTo restores state to height, and remove all histories after height.
 // If no enough histories to rollback return error.
+//回滚到高度 height
 func (h *history) rollbackTo(height uint32) error {
 	// check whether history is enough for rollback
 	limitHeight := h.height - uint32(len(h.changes))

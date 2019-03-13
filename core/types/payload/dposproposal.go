@@ -9,7 +9,7 @@ import (
 )
 //提案
 type DPOSProposal struct {
-	Sponsor    []byte          //提案发起者
+	Sponsor    []byte          //提案发起者 当值的Arbiter publicKey
 	BlockHash  common.Uint256  //块的hash
 	ViewOffset uint32          //??????
 	Sign       []byte          //??????

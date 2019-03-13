@@ -10,15 +10,15 @@ import (
 )
 
 const ProducerInfoVersion byte = 0x00
-
+//生产者注册的信息
 type ProducerInfo struct {
-	OwnerPublicKey []byte
-	NodePublicKey  []byte
-	NickName       string
-	Url            string
-	Location       uint64
-	NetAddress     string
-	Signature      []byte
+	OwnerPublicKey []byte  //拥有者公钥
+	NodePublicKey  []byte  //节点公钥
+	NickName       string  //昵称
+	Url            string  //网址
+	Location       uint64  //地理位置
+	NetAddress     string  //网络地址
+	Signature      []byte  //签名
 }
 
 func (a *ProducerInfo) Data(version byte) []byte {

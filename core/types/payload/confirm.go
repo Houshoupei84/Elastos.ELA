@@ -5,7 +5,7 @@ import (
 
 	"github.com/elastos/Elastos.ELA/common"
 )
-
+//某个提案的确认（大家的投票情况）
 type Confirm struct {
 	Proposal DPOSProposal
 	Votes    []DPOSProposalVote

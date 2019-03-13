@@ -4,7 +4,9 @@ import (
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/common/config"
 )
-
+//Arbitrators的功能管理接口。
+//获得Arbitrators，获得候选人， 获得下一些获得Arbitrators 获得接下来的候选人
+//通过高度获得当值的Arbitrators 等。
 type Arbitrators interface {
 	ForceChange(height uint32) error
 	IncreaseChainHeight(height uint32)

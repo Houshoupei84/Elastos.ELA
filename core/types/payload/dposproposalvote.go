@@ -7,7 +7,7 @@ import (
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/crypto"
 )
-
+//提案投票
 type DPOSProposalVote struct {
 	ProposalHash common.Uint256
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"math"
 	"sync"
 
 	"github.com/elastos/Elastos.ELA/blockchain/interfaces"
@@ -13,6 +12,7 @@ import (
 	"github.com/elastos/Elastos.ELA/core/types"
 	"github.com/elastos/Elastos.ELA/core/types/outputpayload"
 	"github.com/elastos/Elastos.ELA/core/types/payload"
+	"math"
 )
 
 // ProducerState represents the state of a producer.
@@ -62,14 +62,14 @@ func (ps ProducerState) String() string {
 // Producer holds a producer's info.  It provides read only methods to access
 // producer's info.
 type Producer struct {
-	info                  payload.ProducerInfo
-	state                 ProducerState
-	registerHeight        uint32
-	cancelHeight          uint32
-	inactiveSince         uint32
-	activateRequestHeight uint32
-	penalty               common.Fixed64
-	votes                 common.Fixed64
+	info                  payload.ProducerInfo	//生产者注册的信息
+	state                 ProducerState			//生产者的状态Pending Activate Inactivate Canceled FoundBad ReturnedDeposit
+	registerHeight        uint32                //注册高度
+	cancelHeight          uint32				//取消高度
+	inactiveSince         uint32                //??
+	activateRequestHeight uint32				//激活高度
+	penalty               common.Fixed64		//罚金
+	votes                 common.Fixed64		//投票
 }
 
 // Info returns a copy of the origin registered producer info.
@@ -126,31 +126,38 @@ const (
 
 // State is a memory database storing DPOS producers state, like pending
 // producers active producers and their votes.
+//dpos 状态
 type State struct {
-	arbiters    interfaces.Arbitrators
-	chainParams *config.Params
+	arbiters    interfaces.Arbitrators     //  Arbitrators的功能管理接口
+	chainParams *config.Params			   //  链的配置参数
 
 	mtx                 sync.RWMutex
-	nodeOwnerKeys       map[string]string // NodePublicKey as key, OwnerPublicKey as value
-	pendingProducers    map[string]*Producer
-	activityProducers   map[string]*Producer
-	inactiveProducers   map[string]*Producer
-	canceledProducers   map[string]*Producer
-	illegalProducers    map[string]*Producer
-	onDutyMissingCounts map[string]uint32
-	votes               map[string]*types.Output
-	nicknames           map[string]struct{}
-	specialTxHashes     map[string]struct{}
-	history             *history
+	nodeOwnerKeys       map[string]string   // NodePublicKey as key（16进制的字符串）, OwnerPublicKey as value
+	pendingProducers    map[string]*Producer//阻塞状态的Producer列表
+	activityProducers   map[string]*Producer//激活状态的Producer列表
+	inactiveProducers   map[string]*Producer//非激活
+	canceledProducers   map[string]*Producer//已取消
+	illegalProducers    map[string]*Producer//违法
+	onDutyMissingCounts map[string]uint32   //当值的时间漏掉的个数 key为owner public key   value:漏掉的个数
+	votes               map[string]*types.Output //投票 key为tx.Inputs.ReferKey() value为
+	nicknames           map[string]struct{}      //昵称
+	specialTxHashes     map[string]struct{}		 //特殊交易hash
+	history             *history				 //记录所有的生产者 投票变化的状态
 
 	// snapshots is the data set of DPOS state snapshots, it takes a snapshot of
 	// state every 12 blocks, and keeps at most 9 newest snapshots in memory.
-	snapshots [maxSnapshots]*State
-	cursor    int
+	snapshots [maxSnapshots]*State				 //dpos状态的快照， 每12个块快照一次，在内存保存最近的9个块。
+	cursor    int  								 //snapshots 当前的索引
 }
 
 // getProducerKey returns the producer's owner public key string, whether the
 // given public key is the producer's node public key or owner public key.
+//参数：
+//		publicKey : arbiter的公钥
+//功能
+// 		获得生产者的 owner public key.
+//		1,将publicKey编码成 16进制的字符串key
+//		2,如果s.nodeOwnerKeys[key]存在，则它就是owner public key 返回即可。
 func (s *State) getProducerKey(publicKey []byte) string {
 	key := hex.EncodeToString(publicKey)
 
@@ -376,6 +383,7 @@ func (s *State) ProducerExists(publicKey []byte) bool {
 
 // SpecialTxExists returns if a special tx (typically means illegal and
 // inactive tx) is exists by it's hash
+//hash是不是已存在的特殊交易
 func (s *State) SpecialTxExists(hash *common.Uint256) bool {
 	s.mtx.RLock()
 	_, ok := s.specialTxHashes[hash.String()]
@@ -385,6 +393,7 @@ func (s *State) SpecialTxExists(hash *common.Uint256) bool {
 
 // IsDPOSTransaction returns if a transaction will change the producers and
 // votes state.
+//判断一个交易是不是 dpos交易
 func (s *State) IsDPOSTransaction(tx *types.Transaction) bool {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
@@ -422,6 +431,14 @@ func (s *State) IsDPOSTransaction(tx *types.Transaction) bool {
 
 // ProcessBlock takes a block and it's confirm to update producers state and
 // votes accordingly.
+/*
+	参数：
+		block *types.Block       ： 块
+		confirm *payload.Confirm ： 确认情况
+	功能：
+		1，处理块中的所有的交易
+		2，高于投票开始高度，每12个块快照一下
+*/
 func (s *State) ProcessBlock(block *types.Block, confirm *payload.Confirm) {
 	// get on duty arbiter before lock in case of recurrent lock
 	onDutyArbitrator := s.arbiters.GetOnDutyArbitratorByHeight(block.Height)
@@ -436,7 +453,7 @@ func (s *State) ProcessBlock(block *types.Block, confirm *payload.Confirm) {
 		s.countArbitratorsInactivity(block.Height, arbitersCount,
 			onDutyArbitrator, confirm)
 	}
-
+	//arbiters增加或者减少一个高度
 	s.processArbitrators(block, block.Height)
 
 	// Take snapshot when snapshot point arrives.
@@ -449,7 +466,7 @@ func (s *State) ProcessBlock(block *types.Block, confirm *payload.Confirm) {
 	// Commit changes here if no errors found.
 	s.history.commit(block.Height)
 }
-
+//arbiters增加或者减少一个高度，
 func (s *State) processArbitrators(block *types.Block, height uint32) {
 	s.history.append(height, func() {
 		s.arbiters.IncreaseChainHeight(block.Height)
@@ -461,12 +478,22 @@ func (s *State) processArbitrators(block *types.Block, height uint32) {
 // processTransactions takes the transactions and the height when they have been
 // packed into a block.  Then loop through the transactions to update producers
 // state and votes according to transactions content.
+/*
+参数：
+	txs []*types.Transaction	交易slice
+	height uint32				块高度
+功能：
+	遍历每个交易，并处理交易
+	如果有pendingProducers 遍历每一个producer如果当前高度大于请求高度5个块则将这个producer激活
+
+*/
 func (s *State) processTransactions(txs []*types.Transaction, height uint32) {
 	for _, tx := range txs {
 		s.processTransaction(tx, height)
 	}
 
 	// Check if any pending producers has got 6 confirms, set them to activate.
+	//从阻塞态 转换为激活太
 	activateProducerFromPending := func(key string, producer *Producer) {
 		s.history.append(height, func() {
 			producer.state = Activate
@@ -480,6 +507,7 @@ func (s *State) processTransactions(txs []*types.Transaction, height uint32) {
 	}
 
 	// Check if any pending producers has got 6 confirms, set them to activate.
+	//从非激活态 转换为激活态
 	activateProducerFromInactive := func(key string, producer *Producer) {
 		s.history.append(height, func() {
 			producer.state = Activate
@@ -494,14 +522,17 @@ func (s *State) processTransactions(txs []*types.Transaction, height uint32) {
 
 	if len(s.pendingProducers) > 0 {
 		for key, producer := range s.pendingProducers {
+			// ？？？？？ 似乎早了一个块
 			if height-producer.registerHeight+1 >= 6 {
 				activateProducerFromPending(key, producer)
 			}
 		}
 
 	}
+	//对于非激活状态的Producer 当前高度大于激活需要的高度，且当前高度大于请求高度6个块则激活这个producer
 	if len(s.inactiveProducers) > 0 {
 		for key, producer := range s.inactiveProducers {
+			//????????? 这里条件的前半截不需要吧   从非激活态转过来需要6个块高
 			if height > producer.activateRequestHeight &&
 				height-producer.activateRequestHeight+1 >= 6 {
 				activateProducerFromInactive(key, producer)
@@ -513,6 +544,15 @@ func (s *State) processTransactions(txs []*types.Transaction, height uint32) {
 // processTransaction take a transaction and the height it has been packed into
 // a block, then update producers state and votes according to the transaction
 // content.
+//根据交易的类型 来处理对应的函数。分别有
+// 1,注册producer
+// 2,更新producer
+// 3,取消producer
+// 4,激活producer
+// 5, TransferAsset
+// 6, 非法证据
+// 7, InactiveArbitrators
+// 8, ReturnDepositCoin
 func (s *State) processTransaction(tx *types.Transaction, height uint32) {
 	switch tx.TxType {
 	case types.RegisterProducer:
@@ -549,6 +589,7 @@ func (s *State) processTransaction(tx *types.Transaction, height uint32) {
 }
 
 // registerProducer handles the register producer transaction.
+//注册Producer
 func (s *State) registerProducer(payload *payload.ProducerInfo, height uint32) {
 	nickname := payload.NickName
 	nodeKey := hex.EncodeToString(payload.NodePublicKey)
@@ -574,6 +615,7 @@ func (s *State) registerProducer(payload *payload.ProducerInfo, height uint32) {
 }
 
 // updateProducer handles the update producer transaction.
+//更新ProducerInfo
 func (s *State) updateProducer(info *payload.ProducerInfo, height uint32) {
 	producer := s.getProducer(info.OwnerPublicKey)
 	producerInfo := producer.info
@@ -585,6 +627,7 @@ func (s *State) updateProducer(info *payload.ProducerInfo, height uint32) {
 }
 
 // cancelProducer handles the cancel producer transaction.
+//取消一个Producer
 func (s *State) cancelProducer(payload *payload.ProcessProducer, height uint32) {
 	key := hex.EncodeToString(payload.OwnerPublicKey)
 	producer := s.getProducer(payload.OwnerPublicKey)
@@ -604,6 +647,7 @@ func (s *State) cancelProducer(payload *payload.ProcessProducer, height uint32) 
 }
 
 // activateProducer handles the activate producer transaction.
+//激活Producer
 func (s *State) activateProducer(p *payload.ProcessProducer, height uint32) {
 	producer := s.getProducer(p.OwnerPublicKey)
 	s.history.append(height, func() {
@@ -615,7 +659,17 @@ func (s *State) activateProducer(p *payload.ProcessProducer, height uint32) {
 
 // processVotes takes a transaction, if the transaction including any vote
 // inputs or outputs, validate and update producers votes.
+
+/*
+参数：
+	tx *types.Transaction  交易
+	height uint32          块高度
+功能：
+	1，如果交易的版本号 >= TxVersion09 遍历每一个输出如果输出的类型为OTVote 则s.votes增加记录 key为 output的ReferKey value为这个output
+	2, 遍历这个交易的input， 如果这个input在s.votes中存在，则对这个output处理取消投票
+*/
 func (s *State) processVotes(tx *types.Transaction, height uint32) {
+
 	if tx.Version >= types.TxVersion09 {
 		// Votes to producers.
 		for i, output := range tx.Outputs {
@@ -635,7 +689,14 @@ func (s *State) processVotes(tx *types.Transaction, height uint32) {
 		}
 	}
 }
+/*
+参数：
+	output *types.Output : 输出
+	height uint32		 : 区块高度
 
+功能：
+	遍历output的 vote.Candidates ，增加每个生产者的票数
+*/
 // processVoteOutput takes a transaction output with vote payload.
 func (s *State) processVoteOutput(output *types.Output, height uint32) {
 	payload := output.Payload.(*outputpayload.VoteOutput)
@@ -659,6 +720,15 @@ func (s *State) processVoteOutput(output *types.Output, height uint32) {
 }
 
 // processVoteCancel takes a previous vote output and decrease producers votes.
+
+/*
+参数：
+	output *types.Output : 输出
+	height uint32		 : 区块高度
+
+功能：
+	遍历output的 vote.Candidates ，减去每个生产者的票数
+*/
 func (s *State) processVoteCancel(output *types.Output, height uint32) {
 	payload := output.Payload.(*outputpayload.VoteOutput)
 	for _, vote := range payload.Contents {
@@ -683,6 +753,14 @@ func (s *State) processVoteCancel(output *types.Output, height uint32) {
 	}
 }
 
+/*
+参数：
+	tx *types.Transaction ： 交易
+	height uint32         ： 高度
+功能:
+	遍历tx.Programs，根据得到的publickey获得producer, 如果producer的状态为Canceled
+	则将producer的状态设置为ReturnedDeposit
+*/
 func (s *State) returnDeposit(tx *types.Transaction, height uint32) {
 
 	returnAction := func(producer *Producer) {
@@ -703,6 +781,13 @@ func (s *State) returnDeposit(tx *types.Transaction, height uint32) {
 
 // processEmergencyInactiveArbitrators change producer state according to
 // emergency inactive arbitrators
+/*
+inactivePayload	 : *payload.InactiveArbitrators  非激活的Arbitrators
+height			 : uint32                        块高
+
+功能：
+	遍历传入的InactiveArbitrators，设置每一个为inactive
+*/
 func (s *State) processEmergencyInactiveArbitrators(
 	inactivePayload *payload.InactiveArbitrators, height uint32) {
 
@@ -734,6 +819,19 @@ func (s *State) recordSpecialTx(tx *types.Transaction, height uint32) {
 
 // processIllegalEvidence takes the illegal evidence payload and change producer
 // state according to the evidence.
+/*
+参数：
+	payloadData	:	types.Payload
+	height      :   uint32			块高
+
+功能：
+	根据payloadData的类型
+		如果是提案的话记录提案的发起者
+		如果是非法的投票的话，		记录投票的签名者
+		如果是非法的块的话，   	记录每一个签名者
+		如果是非法的侧链的块的话	记录非法的签名者
+		非法的producer 的状态设置为FoundBad。并将其设置到illegalProducers 并从activityProducers删除
+*/
 func (s *State) processIllegalEvidence(payloadData types.Payload,
 	height uint32) {
 	// Get illegal producers from evidence.
@@ -782,7 +880,7 @@ func (s *State) processIllegalEvidence(payloadData types.Payload,
 			})
 			continue
 		}
-
+		//canceledProducers 还能作恶吗？？？？？ 怎么作恶。各个状态的切换，以及其职能。
 		if producer, ok := s.canceledProducers[key]; ok {
 			s.history.append(height, func() {
 				producer.state = FoundBad
@@ -818,19 +916,28 @@ func (s *State) ProcessSpecialTxPayload(p types.Payload) {
 }
 
 // setInactiveProducer set active producer to inactive state
+//设置Producer为inactive 并且罚金增加InactivePenalty
 func (s *State) setInactiveProducer(producer *Producer, key string,
 	height uint32) {
+	//同样这里没有检查原来是激活状态，？？？？？？
 	producer.inactiveSince = height
 	producer.state = Inactivate
 	s.inactiveProducers[key] = producer
 	delete(s.activityProducers, key)
-
+	//?????????????????????????? 这里感觉是不是不太对 对照revertSettingInactiveProducer的penalty
 	producer.penalty += s.chainParams.InactivePenalty
 }
 
 // revertSettingInactiveProducer revert operation about setInactiveProducer
+/*
+	撤销Producer的inactive状态。这里参数height 没用。
+*/
 func (s *State) revertSettingInactiveProducer(producer *Producer, key string,
 	height uint32) {
+	//producer状态设置为激活,
+	//罚金小于非激活罚金的话  罚金为0
+	//罚金如果大于Inactive Penalty  减去InactivePenalty
+	//???????????????? 这里并没有检查说当前的状态是Inactive
 	producer.inactiveSince = 0
 	producer.state = Activate
 	s.activityProducers[key] = producer
@@ -845,17 +952,34 @@ func (s *State) revertSettingInactiveProducer(producer *Producer, key string,
 
 // countArbitratorsInactivity count arbitrators inactive rounds, and change to
 // inactive if more than "MaxInactiveRounds"
+
+/*
+参数
+	height			   : uint32    			块高
+	totalArbitersCount : uint32    			arbiter个数
+	onDutyArbiter      : []byte    			当值的Arbiter publicKey
+	confirm            : *payload.Confirm	某个提案的确认（大家的投票情况）
+
+功能：
+	1，如果总的arbiters个数 跟CRCArbiters个数相等返回
+	2，处理当值的Producer 是否应该设置为非激活状态
+*/
 func (s *State) countArbitratorsInactivity(height, totalArbitersCount uint32,
 	onDutyArbiter []byte, confirm *payload.Confirm) {
 	// check inactive arbitrators after producers has participated in
+	//????????????这里是否会出现，CRCArbiters掉线了的情况
 	if int(totalArbitersCount) == len(s.chainParams.CRCArbiters) {
 		return
 	}
 
 	key := s.getProducerKey(onDutyArbiter)
 
+	//当值的arbiter  不是这个提案的发起人????????
 	isMissOnDuty := !bytes.Equal(onDutyArbiter, confirm.Proposal.Sponsor)
+
 	if producer, ok := s.activityProducers[key]; ok {
+		//count漏掉的个数
+		//existMissingRecord bool 是否有漏掉个数的记录
 		count, existMissingRecord := s.onDutyMissingCounts[key]
 
 		s.history.append(height, func() {
@@ -867,14 +991,28 @@ func (s *State) countArbitratorsInactivity(height, totalArbitersCount uint32,
 		})
 	}
 }
-
+/*
+参数：
+	isMissOnDuty:           当值的arbitor 是否是这个提案的发起者
+	existMissingRecord：    是否有漏签记录
+	key:                    当前arbitor的 owner public key.
+	producer:			    当值的arbitor的producer结构
+	height:					块高
+	count :					漏掉的次数
+功能：
+	1，如果当前漏处理区块，   且原来存在漏处理记录，则增加次数。如果原来不存在漏处理区块则次数设为1 如果次数超过配置的次数则设置这个producer为非激活状态
+	3，如果当前不是漏处理区块， 则删除这个producer的漏处理记录
+*/
 func (s *State) tryRevertOnDutyInactivity(isMissOnDuty bool,
 	existMissingRecord bool, key string, producer *Producer,
 	height uint32, count uint32) {
+
 	if isMissOnDuty {
 		if existMissingRecord {
 			if producer.state == Inactivate {
+				//撤销设置非激活的Producer
 				s.revertSettingInactiveProducer(producer, key, height)
+				//这里是不是应该设置为s.chainParams.MaxInactiveRounds -1  ？？？？？？？、
 				s.onDutyMissingCounts[key] = s.chainParams.MaxInactiveRounds
 			} else {
 				if count > 1 {
@@ -890,9 +1028,20 @@ func (s *State) tryRevertOnDutyInactivity(isMissOnDuty bool,
 		}
 	}
 }
-
+/*
+参数：
+	isMissOnDuty:           当值的arbitor 是否是这个提案的发起者
+	existMissingRecord：    是否有漏签记录
+	key:                    当前arbitor的 owner public key.
+	producer:			    当值的arbitor的producer结构
+	height:					块高
+功能：
+	1，如果当前漏处理区块，   且原来存在漏处理记录，则增加次数。如果原来不存在漏处理区块则次数设为1 如果次数超过配置的次数则设置这个producer为非激活状态
+	3，如果当前不是漏处理区块， 则删除这个producer的漏处理记录
+*/
 func (s *State) tryUpdateOnDutyInactivity(isMissOnDuty bool,
 	existMissingRecord bool, key string, producer *Producer, height uint32) {
+	//？？？？？？
 	if isMissOnDuty {
 		if existMissingRecord {
 			s.onDutyMissingCounts[key]++
@@ -914,6 +1063,7 @@ func (s *State) tryUpdateOnDutyInactivity(isMissOnDuty bool,
 
 // RollbackTo restores the database state to the given height, if no enough
 // history to rollback to return error.
+//回退到高度height
 func (s *State) RollbackTo(height uint32) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -936,6 +1086,7 @@ func (s *State) GetHistory(height uint32) (*State, error) {
 }
 
 // snapshot takes a snapshot of current state and returns the copy.
+//获取state s的阻塞，激活，非激活，已取消的 非法行为的Producer 以及onDutyMissingCounts
 func (s *State) snapshot() *State {
 	state := State{
 		pendingProducers:    make(map[string]*Producer),
@@ -955,6 +1106,7 @@ func (s *State) snapshot() *State {
 }
 
 // GetSnapshot returns a snapshot of the state according to the given height.
+//根据给定的高度 获取快照
 func (s *State) GetSnapshot(height uint32) *State {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
@@ -964,13 +1116,14 @@ func (s *State) GetSnapshot(height uint32) *State {
 }
 
 // copyMap copy the src map's key, value pairs into dst map.
+// value 是指针的用这个
 func copyMap(dst map[string]*Producer, src map[string]*Producer) {
 	for k, v := range src {
 		p := *v
 		dst[k] = &p
 	}
 }
-
+//value 是值的用这个
 // copyMap copy the src map's key, value pairs into dst map.
 func copyCountMap(dst map[string]uint32, src map[string]uint32) {
 	for k, v := range src {

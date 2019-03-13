@@ -42,7 +42,7 @@ out:
 
 	s.wg.Done()
 }
-
+//StartArbitratorsRecord
 func (s *DposStore) StartArbitratorsRecord() {
 	go s.arbiterLoop()
 }

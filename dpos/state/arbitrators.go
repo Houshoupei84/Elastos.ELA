@@ -30,18 +30,18 @@ const (
 )
 
 type Arbitrators struct {
-	*State
-	chainParams   *config.Params
-	versions      interfaces.HeightVersions
+	*State										   //dpos 状态
+	chainParams   *config.Params                   //链参数配置
+	versions      interfaces.HeightVersions        //HeightVersions接口
 	bestHeight    func() uint32
-	arbitersCount uint32
+	arbitersCount uint32						   //arbiters个数
 
 	mtx                             sync.Mutex
-	dutyIndex                       uint32
-	currentArbitrators              [][]byte
-	currentCandidates               [][]byte
-	currentArbitratorsProgramHashes []*common.Uint168
-	currentCandidatesProgramHashes  []*common.Uint168
+	dutyIndex                       uint32         //
+	currentArbitrators              [][]byte       //当前的arbitrators数组
+	currentCandidates               [][]byte       //当前候选人
+	currentArbitratorsProgramHashes []*common.Uint168 //
+	currentCandidatesProgramHashes  []*common.Uint168 //
 	nextArbitrators                 [][]byte
 	nextCandidates                  [][]byte
 	crcArbitratorsProgramHashes     map[common.Uint168]interface{}

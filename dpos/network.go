@@ -116,7 +116,9 @@ func (n *network) Start() {
 		}
 	}()
 }
-//
+//1, 遍历每一个直接连接的Peers 如果他已经不再是激活的producer则把他放入needDeletedPeers
+//2, 对于已经直连的超级节点，更新他的连接信息注意NeedConnect为false Sequence为0  Peer为nil
+//3, 保存直连的超级节点信息
 func (n *network) UpdateProducersInfo() {
 	log.Info("[UpdateProducersInfo] start")
 	defer log.Info("[UpdateProducersInfo] end")
@@ -148,7 +150,7 @@ func (n *network) UpdateProducersInfo() {
 			}
 		}
 	}
-	//存储智联的节点的信息
+	//存储直连的节点的信息
 	//???????????????? 这里如果有个节点被删除了 没有删除存储，下次重连还是有可能连接的吧。
 	n.saveDirectPeers()
 }

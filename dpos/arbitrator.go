@@ -24,20 +24,20 @@ import (
 type ArbitratorConfig struct {
 	EnableEventLog    bool
 	EnableEventRecord bool
-	Params            config.ArbiterConfiguration
-	Arbitrators       interfaces.Arbitrators
-	Store             interfaces.IDposStore
-	TxMemPool         *mempool.TxPool
-	BlockMemPool      *mempool.BlockPool
-	ChainParams       *config.Params
-	Broadcast         func(msg p2p.Message)
+	Params            config.ArbiterConfiguration // ArbiterConfiguration配置参数
+	Arbitrators       interfaces.Arbitrators      //Arbitrators 接口
+	Store             interfaces.IDposStore       //IDposStore接口 dpos相关的数据存储
+	TxMemPool         *mempool.TxPool             //交易池
+	BlockMemPool      *mempool.BlockPool          //区块池
+	ChainParams       *config.Params              //链的配置参数
+	Broadcast         func(msg p2p.Message)       //广播
 }
 
 type Arbitrator struct {
-	cfg            ArbitratorConfig
-	enableViewLoop bool
-	network        *network
-	dposManager    *manager.DPOSManager
+	cfg            ArbitratorConfig			// Arbitrator配置参数
+	enableViewLoop bool						// ?？？？？作用
+	network        *network					// 网络
+	dposManager    *manager.DPOSManager		// Dpos的核心类
 }
 
 func (a *Arbitrator) Start() {
