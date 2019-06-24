@@ -163,6 +163,17 @@ func (b *BlockChain) CheckBlockSanity(block *Block) error {
 			}
 			existingCR[crPayload.DID] = struct{}{}
 		case UpdateCR:
+			crPayload, ok := txn.Payload.(*payload.CRInfo)
+			if !ok {
+				return errors.New("[PowCheckBlockSanity] invalid register CR payload")
+			}
+
+			// Check for duplicate CR in a block
+			if _, exists := existingCR[crPayload.DID]; exists {
+				return errors.New("[PowCheckBlockSanity] block contains duplicate CR")
+			}
+			existingCR[crPayload.DID] = struct{}{}
+
 		}
 
 		// Append transaction to list
