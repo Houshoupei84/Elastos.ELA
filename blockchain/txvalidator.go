@@ -1277,10 +1277,9 @@ func (b *BlockChain) checkUpdateCRTransaction(txn *Transaction) error {
 	if err := b.crInfoSanityCheck(info); err != nil {
 		return err
 	}
-
 	// todo check info.Code -----> DID(no matter CHECKSIG CHECKMULTISIG) must be registered
 	// todo if new nickname is not same as old nickname   check   duplication of nickname.(need to check by cr state)
-
+	// todo updateCR logic
 	return nil
 }
 
@@ -1297,38 +1296,24 @@ func (b *BlockChain) checkUnRegisterCRTransaction(txn *Transaction) error {
 	if err != nil {
 		return err
 	}
-	signType, err := crypto.GetScriptType(info.Code)
-	if err != nil {
-		return errors.New("invalid code")
-	}
-	if signType == vm.CHECKSIG {
-		// check code and signature
-		if err := checkStandardSignature(program.Program{
-			Code:      info.Code,
-			Parameter: info.Signature,
-		}, signedBuf.Bytes()); err != nil {
-			return err
-		}
-	} else if signType == vm.CHECKMULTISIG {
-		// check code and signature
-		if err := checkMultiSigSignatures(program.Program{
-			Code:      info.Code,
-			Parameter: info.Signature,
-		}, signedBuf.Bytes()); err != nil {
-			return err
-		}
+	parameter := getParameterBySignature(info.Signature)
 
-	} else {
-		return errors.New("invalid code type")
+	err = checkSignature(program.Program{
+		Code:      info.Code,
+		Parameter: parameter,
+	}, signedBuf.Bytes())
+
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func bySignatureGetParameter(info *payload.CRInfo) []byte {
+func getParameterBySignature(Signature []byte) []byte {
 	buf := new(bytes.Buffer)
-	buf.WriteByte(byte(len(info.Signature)))
-	buf.Write(info.Signature)
+	buf.WriteByte(byte(len(Signature)))
+	buf.Write(Signature)
 	return buf.Bytes()
 }
 
@@ -1360,34 +1345,22 @@ func (b *BlockChain) getProgramHash(info *payload.CRInfo) (*common.Uint168, erro
 
 func (b *BlockChain) crInfoSanityCheck(info *payload.CRInfo) error {
 	signedBuf := new(bytes.Buffer)
-	if err := info.SerializeUnsigned(signedBuf, payload.CRInfoVersion); err != nil {
+	err := info.SerializeUnsigned(signedBuf, payload.ProducerInfoVersion)
+	if err != nil {
 		return err
 	}
-	parameter := bySignatureGetParameter(info)
-	signType, err := crypto.GetScriptType(info.Code)
+	parameter := getParameterBySignature(info.Signature)
+
+	err = checkSignature(program.Program{
+		Code:      info.Code,
+		Parameter: parameter,
+	}, signedBuf.Bytes())
+
 	if err != nil {
-		return errors.New("invalid code")
-	}
-	if signType == vm.CHECKSIG {
-		// check code and signature
-		if err := checkStandardSignature(program.Program{
-			Code:      info.Code,
-			Parameter: parameter,
-		}, signedBuf.Bytes()); err != nil {
-			return err
-		}
-	} else if signType == vm.CHECKMULTISIG {
-		// check code and signature
-		if err := checkMultiSigSignatures(program.Program{
-			Code:      info.Code,
-			Parameter: parameter,
-		}, signedBuf.Bytes()); err != nil {
-			return err
-		}
-	} else {
-		return errors.New("invalid code type")
+		return err
 	}
 	return nil
+
 }
 
 func (b *BlockChain) additionalProducerInfoCheck(
