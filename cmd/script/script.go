@@ -1,13 +1,15 @@
 // Copyright (c) 2017-2019 Elastos Foundation
 // Use of this source code is governed by an MIT
 // license that can be found in the LICENSE file.
-// 
+//
 
 package script
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
+	"strings"
 
 	"github.com/elastos/Elastos.ELA/cmd/common"
 	"github.com/elastos/Elastos.ELA/cmd/script/api"
@@ -15,6 +17,36 @@ import (
 	"github.com/urfave/cli"
 	"github.com/yuin/gopher-lua"
 )
+
+func setArgForScript(L *lua.LState, luaFileArgs []string) {
+	argtb := L.NewTable()
+	for j := 0; j < len(luaFileArgs); j += 2 {
+		L.RawSet(argtb, lua.LString(luaFileArgs[j]),
+			lua.LString(luaFileArgs[j+1]))
+	}
+	L.SetGlobal("arg", argtb)
+}
+
+//./ela-cli script -f "test/transaction/test_arg.lua  -publickey 1233 " --rpcport  3000
+//at least should be    ./ela-cli script -f "test/transaction/test_arg.lua"
+func analysisArgsForScriptNew(L *lua.LState) (err error, luaFileName string,
+	luaFileArg []string) {
+	//var luaFileName string
+	//var luaFileArg []string
+
+	if len(os.Args) <= 3 {
+		return errors.New("os.Args length <= 3"), luaFileName, luaFileArg
+	}
+	for i := 3; i < len(os.Args); i++ {
+		if strings.Contains(os.Args[i], ".lua") {
+			luaFileArg = strings.Fields(os.Args[i])
+			luaFileName = luaFileArg[0]
+			luaFileArg = luaFileArg[1:]
+			break
+		}
+	}
+	return nil, luaFileName, luaFileArg
+}
 
 func scriptAction(c *cli.Context) error {
 	if c.NumFlags() == 0 {
@@ -38,9 +70,21 @@ func scriptAction(c *cli.Context) error {
 	}
 
 	if fileContent != "" {
-		if err := L.DoFile(fileContent); err != nil {
-			panic(err)
+		fmt.Println(os.Args)
+		if len(os.Args) > 3 {
+			err, luaFileName, luaFileArg := analysisArgsForScriptNew(L)
+			if err != nil {
+				panic(err)
+			}
+			setArgForScript(L, luaFileArg)
+			fmt.Println(luaFileName)
+			if err = L.DoFile(luaFileName); err != nil {
+				panic(err)
+			}
+		} else {
+			panic(errors.New("os.Args length <= 3"))
 		}
+
 	}
 
 	if testContent != "" {
