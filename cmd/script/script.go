@@ -170,7 +170,7 @@ func registerCRCProposalRelatedParams(c *cli.Context, L *lua.LState) {
 	budgets := c.String("budgets")
 	voteResult := c.Int("voteresult")
 	proposalTrackingType := c.Int64("proposaltrackingtype")
-	MessageHash := c.String("MessageHash")
+	MessageHash := c.String("messagehash")
 	crOpinionHash := c.String("cropinionhash")
 	SecretaryGeneralOpinionHash := c.String("SecretaryGeneralOpinionHash")
 	stage := c.Int64("stage")
@@ -449,10 +449,6 @@ func NewCommand() *cli.Command {
 				Name:  "drafthash",
 				Usage: "set the draft proposal hash",
 			},
-			//cli.StringFlag{
-			//	Name:  "newownerpublickey",
-			//	Usage: "set the new owner public key",
-			//},
 			cli.StringFlag{
 				Name:  "previoushash",
 				Usage: "set the previous proposal hash",
@@ -482,7 +478,7 @@ func NewCommand() *cli.Command {
 				Usage: "set the type of proposal tracking transaction",
 			},
 			cli.StringFlag{
-				Name:  "MessageHash",
+				Name:  "messagehash",
 				Usage: "set the hash of proposal tracking document",
 			},
 			cli.StringFlag{
@@ -490,25 +486,17 @@ func NewCommand() *cli.Command {
 				Usage: "set the hash of proposal opinion",
 			},
 			cli.StringFlag{
-				Name:  "SecretaryGeneralOpinionHash",
+				Name:  "secretarygeneralopinionhash",
 				Usage: "set the hash of proposal tracking opinion",
 			},
 			cli.Int64Flag{
 				Name:  "stage",
 				Usage: "set the stage of proposal",
 			},
-			//cli.StringFlag{
-			//	Name:  "ownerpublickey",
-			//	Usage: "set the public key of proposal leader",
-			//},
 			cli.StringFlag{
 				Name:  "newownerpublickey",
 				Usage: "set the public key of new proposal leader",
 			},
-			//cli.StringFlag{
-			//	Name:  "ownerprivatekey",
-			//	Usage: "set the private key of proposal leader",
-			//},
 			cli.StringFlag{
 				Name:  "newownerprivatekey",
 				Usage: "set the private key of new proposal leader",
