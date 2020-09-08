@@ -207,6 +207,9 @@ func (s *Settings) InitParamsValue() {
 	}
 
 	for _, v := range s.items {
+		if v.ParamName == "RegisterSidechainProposalStartHeight" {
+			fmt.Println("Hello world")
+		}
 		if err := v.TryInitValue(s.params, s.conf, s.context); err != nil {
 			cmdcom.PrintErrorMsg(err.Error())
 			os.Exit(1)
@@ -503,6 +506,12 @@ func NewSettings() *Settings {
 		DefaultValue: uint32(0),
 		ConfigPath:   "CRConfiguration.CRClaimDPOSNodeStartHeight",
 		ParamName:    "CRClaimDPOSNodeStartHeight"})
+
+	result.Add(&settingItem{
+		Flag:         cmdcom.RegisterSidechainProposalStartHeightFlag,
+		DefaultValue: uint32(0),
+		ConfigPath:   "RegisterSidechainProposalStartHeight",
+		ParamName:    "RegisterSidechainProposalStartHeight"})
 
 	result.Add(&settingItem{
 		Flag:         cmdcom.CRClaimDPOSNodePeriodFlag,

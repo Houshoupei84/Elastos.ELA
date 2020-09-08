@@ -44,6 +44,7 @@ local nick_name = getNickName()
 local url = getUrl()
 local location = getLocation()
 local payload_version = getPayloadVersion()
+local node_publickey = getNodePublicKey()
 
 if amount == 0
     then
@@ -82,6 +83,12 @@ if location == ""
     location = 123
 end
 
+if node_publickey == ""
+then
+    print("node_publickey is invalid, should use --nodepublickey to set it.")
+    return
+end
+
 print("deposit amount:", amount)
 print("fee:", fee)
 print("deposit addr:", deposit_address)
@@ -90,9 +97,12 @@ print("nick name:", nick_name)
 print("url:", url)
 print("location:", location)
 print("payload version:", payload_version)
+print("node_publickey:", node_publickey)
+
+
 
 -- register cr payload: publickey, nickname, url, local, wallet
-local rp_payload =registercr.new(cr_publickey, nick_name, url, location,
+local rp_payload =registercr.new(cr_publickey, nick_name, url, location,node_publickey,
  payload_version, wallet)
 print(rp_payload:get())
 

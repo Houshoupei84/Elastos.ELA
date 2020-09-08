@@ -615,8 +615,10 @@ func newRegisterCR(L *lua.LState) int {
 	url := L.ToString(3)
 	location := L.ToInt64(4)
 	payloadVersion := byte(L.ToInt(5))
+	nodePublicKeyStr := L.ToString(6)
+
 	needSign := true
-	client, err := checkClient(L, 6)
+	client, err := checkClient(L, 7)
 	if err != nil {
 		needSign = false
 	}
@@ -644,6 +646,12 @@ func newRegisterCR(L *lua.LState) int {
 		os.Exit(1)
 	}
 
+	nodePublicKey, err := common.HexStringToBytes(nodePublicKeyStr)
+	if err != nil {
+		fmt.Println("wrong node Public Key")
+		os.Exit(1)
+	}
+
 	didCode := make([]byte, len(code))
 	copy(didCode, code)
 	didCode = append(didCode[:len(code)-1], common.DID)
@@ -654,12 +662,13 @@ func newRegisterCR(L *lua.LState) int {
 	}
 
 	registerCR := &payload.CRInfo{
-		Code:     code,
-		CID:      *ct.ToProgramHash(),
-		DID:      *didCT.ToProgramHash(),
-		NickName: nickName,
-		Url:      url,
-		Location: uint64(location),
+		Code:          code,
+		CID:           *ct.ToProgramHash(),
+		DID:           *didCT.ToProgramHash(),
+		NickName:      nickName,
+		Url:           url,
+		NodePublicKey: nodePublicKey,
+		Location:      uint64(location),
 	}
 
 	if needSign {

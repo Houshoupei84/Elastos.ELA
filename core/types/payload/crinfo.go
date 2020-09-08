@@ -16,16 +16,18 @@ import (
 
 const CRInfoVersion byte = 0x00
 const CRInfoDIDVersion byte = 0x01
+const CRInfoNodePublicKey byte = 0x02
 
 // CRInfo defines the information of CR.
 type CRInfo struct {
-	Code      []byte
-	CID       common.Uint168
-	DID       common.Uint168
-	NickName  string
-	Url       string
-	Location  uint64
-	Signature []byte
+	Code          []byte
+	CID           common.Uint168
+	DID           common.Uint168
+	NickName      string
+	Url           string
+	Location      uint64
+	NodePublicKey []byte
+	Signature     []byte
 }
 
 func (a *CRInfo) Data(version byte) []byte {
@@ -81,6 +83,13 @@ func (a *CRInfo) SerializeUnsigned(w io.Writer, version byte) error {
 		return errors.New("[CRInfo], location serialize failed")
 	}
 
+	if version > CRInfoDIDVersion {
+		err = common.WriteVarBytes(w, a.NodePublicKey)
+		if err != nil {
+			return errors.New("[CRInfo], NodePublicKey serialize failed")
+		}
+	}
+
 	return nil
 }
 
@@ -128,7 +137,12 @@ func (a *CRInfo) DeserializeUnsigned(r io.Reader, version byte) error {
 	if err != nil {
 		return errors.New("[CRInfo], location deserialize failed")
 	}
-
+	if version > CRInfoDIDVersion {
+		a.NodePublicKey, err = common.ReadVarBytes(r, crypto.PublicKeyScriptLength, "NodePublicKey")
+		if err != nil {
+			return errors.New("[CRInfo], NodePublicKey deserialize failed")
+		}
+	}
 	return nil
 }
 func (a *CRInfo) GetCodeHash() common.Uint160 {

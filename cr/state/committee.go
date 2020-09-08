@@ -1112,6 +1112,7 @@ func (c *Committee) generateMember(candidate *Candidate) *CRMember {
 		DepositHash:           candidate.depositHash,
 		MemberState:           MemberElected,
 		ActivateRequestHeight: math.MaxUint32,
+		DPOSPublicKey:         candidate.info.NodePublicKey,
 	}
 }
 

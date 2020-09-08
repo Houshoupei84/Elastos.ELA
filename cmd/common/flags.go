@@ -234,6 +234,10 @@ var (
 		Name:  "crclaimdposnodestartheight",
 		Usage: "defines the height of CR claim DPOS node started",
 	}
+	RegisterSidechainProposalStartHeightFlag = cli.StringFlag{
+		Name:  "registersidechainproposalstartheight",
+		Usage: "defines the height of register sidechain proposal start height ",
+	}
 	CRClaimDPOSNodePeriodFlag = cli.StringFlag{
 		Name:  "crclaimdposnodeperiod",
 		Usage: "defines the period of CR claim DPOS node",

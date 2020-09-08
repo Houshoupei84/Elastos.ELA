@@ -1091,6 +1091,10 @@ func checkDuplicateSidechainTx(txn *Transaction) error {
 func (b *BlockChain) checkTxHeightVersion(txn *Transaction, blockHeight uint32) error {
 	switch txn.TxType {
 	case RegisterCR, UpdateCR:
+		if blockHeight >= b.chainParams.RegisterSidechainProposalStartHeight &&
+			txn.PayloadVersion != payload.CRInfoNodePublicKey {
+			return errors.New("not support after RegisterSidechainProposalStartHeight")
+		}
 		if blockHeight < b.chainParams.CRVotingStartHeight ||
 			(blockHeight < b.chainParams.RegisterCRByDIDHeight &&
 				txn.PayloadVersion != payload.CRInfoVersion) {
@@ -1766,7 +1770,7 @@ func (b *BlockChain) checkRegisterCRTransaction(txn *Transaction,
 	}
 
 	if blockHeight >= b.chainParams.RegisterCRByDIDHeight &&
-		txn.PayloadVersion == payload.CRInfoDIDVersion {
+		txn.PayloadVersion >= payload.CRInfoDIDVersion {
 		// get DID program hash
 
 		programHash, err = getDIDFromCode(info.Code)
@@ -1777,6 +1781,11 @@ func (b *BlockChain) checkRegisterCRTransaction(txn *Transaction,
 		if !info.DID.IsEqual(*programHash) {
 			return errors.New("invalid did address")
 		}
+	}
+
+	if txn.PayloadVersion >= payload.CRInfoNodePublicKey && len(info.NodePublicKey) != 33 {
+		return errors.New("invalid info.NodePublicKey ")
+
 	}
 
 	// check code and signature
@@ -1843,7 +1852,7 @@ func (b *BlockChain) checkUpdateCRTransaction(txn *Transaction,
 	}
 
 	if blockHeight >= b.chainParams.RegisterCRByDIDHeight &&
-		txn.PayloadVersion == payload.CRInfoDIDVersion {
+		txn.PayloadVersion >= payload.CRInfoDIDVersion {
 		// get DID program hash
 
 		programHash, err = getDIDFromCode(info.Code)
@@ -1854,6 +1863,10 @@ func (b *BlockChain) checkUpdateCRTransaction(txn *Transaction,
 		if !info.DID.IsEqual(*programHash) {
 			return errors.New("invalid did address")
 		}
+	}
+	if txn.PayloadVersion >= payload.CRInfoNodePublicKey && len(info.NodePublicKey) != 33 {
+		return errors.New("invalid info.NodePublicKey ")
+
 	}
 
 	// check code and signature
