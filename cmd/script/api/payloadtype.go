@@ -645,12 +645,10 @@ func newRegisterCR(L *lua.LState) int {
 		fmt.Println("wrong cr public key")
 		os.Exit(1)
 	}
+	fmt.Printf("nodePublicKeyStr %s ,len %d \n", nodePublicKeyStr, len(nodePublicKeyStr))
 
-	nodePublicKey, err := common.HexStringToBytes(nodePublicKeyStr)
-	if err != nil {
-		fmt.Println("wrong node Public Key")
-		os.Exit(1)
-	}
+	var nodePublicKey []byte
+	nodePublicKey, _ = common.HexStringToBytes(nodePublicKeyStr)
 
 	didCode := make([]byte, len(code))
 	copy(didCode, code)
@@ -667,8 +665,8 @@ func newRegisterCR(L *lua.LState) int {
 		DID:           *didCT.ToProgramHash(),
 		NickName:      nickName,
 		Url:           url,
-		NodePublicKey: nodePublicKey,
 		Location:      uint64(location),
+		NodePublicKey: nodePublicKey,
 	}
 
 	if needSign {

@@ -83,11 +83,11 @@ if location == ""
     location = 123
 end
 
-if node_publickey == ""
-then
-    print("node_publickey is invalid, should use --nodepublickey to set it.")
-    return
-end
+--if node_publickey == ""
+--then
+--    print("node_publickey is invalid, should use --nodepublickey to set it.")
+--    return
+--end
 
 print("deposit amount:", amount)
 print("fee:", fee)
@@ -102,8 +102,7 @@ print("node_publickey:", node_publickey)
 
 
 -- register cr payload: publickey, nickname, url, local, wallet
-local rp_payload =registercr.new(cr_publickey, nick_name, url, location,node_publickey,
- payload_version, wallet)
+local rp_payload =registercr.new(cr_publickey, nick_name, url, location, payload_version,node_publickey, wallet)
 print(rp_payload:get())
 
 -- transaction: version, txType, payloadVersion, payload, locktime
