@@ -628,6 +628,9 @@ type Params struct {
 
 	// NewP2PProtocolVersionHeight defines the new p2p protocol version message height
 	NewP2PProtocolVersionHeight uint64
+
+	// IllegalBehaviorPenaltyHeight defines the new height that illegal behavior should be punished
+	IllegalBehaviorPenaltyHeight uint32
 }
 
 // rewardPerBlock calculates the reward for each block by a specified time
