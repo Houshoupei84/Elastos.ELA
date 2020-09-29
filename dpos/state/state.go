@@ -1442,6 +1442,8 @@ func (s *State) RemoveSpecialTx(hash common.Uint256) {
 // state according to the evidence.
 func (s *State) processIllegalEvidence(payloadData types.Payload,
 	height uint32) {
+	log.Errorf("processIllegalEvidence height %d begin", height)
+
 	// Get illegal producers from evidence.
 	var illegalProducers [][]byte
 	switch p := payloadData.(type) {
@@ -1449,6 +1451,8 @@ func (s *State) processIllegalEvidence(payloadData types.Payload,
 		illegalProducers = [][]byte{p.Evidence.Proposal.Sponsor}
 
 	case *payload.DPOSIllegalVotes:
+		log.Errorf("processIllegalEvidence DPOSIllegalVotes ")
+
 		illegalProducers = [][]byte{p.Evidence.Vote.Signer}
 
 	case *payload.DPOSIllegalBlocks:
@@ -1474,16 +1478,22 @@ func (s *State) processIllegalEvidence(payloadData types.Payload,
 	crMembersMap := s.getClaimedCRMembersMap()
 	// Set illegal producers to FoundBad state
 	for _, pk := range illegalProducers {
+
 		key, ok := s.NodeOwnerKeys[hex.EncodeToString(pk)]
 		if !ok {
 			continue
 		}
+		log.Errorf("processIllegalEvidence illegal OwnerKeys key", hex.EncodeToString(pk))
 		if cr, ok := crMembersMap[hex.EncodeToString(pk)]; ok {
+
 			if cr.DPOSPublicKey == nil {
+				log.Errorf("processIllegalEvidence cr.DPOSPublicKey == nil")
+
 				continue
 			}
 			oriState := cr.MemberState
 			s.history.Append(height, func() {
+				log.Errorf("processIllegalEvidence tryUpdateCRMemberIllegal DID %s", cr.Info.DID)
 				s.tryUpdateCRMemberIllegal(cr.Info.DID, height)
 			}, func() {
 				s.tryRevertCRMemberIllegal(cr.Info.DID, oriState, height)
@@ -1497,7 +1507,14 @@ func (s *State) processIllegalEvidence(payloadData types.Payload,
 				producer.illegalHeight = height
 				s.IllegalProducers[key] = producer
 				producer.activateRequestHeight = math.MaxUint32
-				producer.penalty += s.chainParams.IllegalPenalty
+				//log.Errorf("processIllegalEvidence s.chainParams.IllegalBehaviorPenaltyHeight %v", s.chainParams.IllegalBehaviorPenaltyHeight)
+				log.Errorf("processIllegalEvidence IllegalPenalty %f", s.chainParams.IllegalPenalty)
+
+				if height >= s.chainParams.IllegalBehaviorPenaltyHeight {
+					producer.penalty += s.chainParams.IllegalPenalty
+				}
+				//log.Errorf("processIllegalEvidence producer penalty  %v", producer.penalty)
+
 				delete(s.ActivityProducers, key)
 				delete(s.Nicknames, producer.info.NickName)
 			}, func() {
@@ -1518,7 +1535,14 @@ func (s *State) processIllegalEvidence(payloadData types.Payload,
 				producer.state = Illegal
 				producer.illegalHeight = height
 				s.IllegalProducers[key] = producer
-				producer.penalty += s.chainParams.IllegalPenalty
+				log.Errorf("processIllegalEvidence CanceledProducers s.chainParams.IllegalBehaviorPenaltyHeight %f", s.chainParams.IllegalBehaviorPenaltyHeight)
+				//log.Errorf("processIllegalEvidence IllegalPenalty %v", s.chainParams.IllegalPenalty)
+
+				if height >= s.chainParams.IllegalBehaviorPenaltyHeight {
+					producer.penalty += s.chainParams.IllegalPenalty
+				}
+				//log.Errorf("processIllegalEvidence CanceledProducers penalty  %v", producer.penalty)
+
 				delete(s.CanceledProducers, key)
 				delete(s.Nicknames, producer.info.NickName)
 			}, func() {

@@ -191,9 +191,9 @@ var DefaultParams = Params{
 	RegisterCRByDIDHeight:        598000,
 	ToleranceDuration:            5 * time.Second,
 	MaxInactiveRounds:            720 * 2,
-	InactivePenalty:              0, //there will be no penalty in this version
-	IllegalPenalty:               0, //there will be no penalty in this version
-	EmergencyInactivePenalty:     0, //there will be no penalty in this version
+	InactivePenalty:              0,    //there will be no penalty in this version
+	IllegalPenalty:               5000, //there will be no penalty in this version
+	EmergencyInactivePenalty:     0,    //there will be no penalty in this version
 	GeneralArbiters:              24,
 	CandidateArbiters:            72,
 	PreConnectOffset:             360,
@@ -298,6 +298,7 @@ func (p *Params) TestNet() *Params {
 	copy.CheckVoteCRCountHeight = 546500
 	copy.MaxCRAssetsAddressUTXOCount = 800
 	copy.IllegalBehaviorPenaltyHeight = 1000000
+	copy.IllegalPenalty = 5000
 	return &copy
 }
 
@@ -369,6 +370,7 @@ func (p *Params) RegNet() *Params {
 	copy.CheckVoteCRCountHeight = 435000
 	copy.MaxCRAssetsAddressUTXOCount = 1440
 	copy.IllegalBehaviorPenaltyHeight = 1000000
+	copy.IllegalPenalty = 5000
 
 	return &copy
 }

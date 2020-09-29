@@ -79,6 +79,7 @@ type Configuration struct {
 	TxCacheVolume                uint32            `json:"TxCacheVolume"`
 	MaxNodePerHost               uint32            `json:"MaxNodePerHost"`
 	IllegalBehaviorPenaltyHeight uint32            `json:"IllegalBehaviorPenaltyHeight"`
+	IllegalPenalty               common.Fixed64    `json:"IllegalPenalty"`
 }
 
 // DPoSConfiguration defines the DPoS consensus parameters.

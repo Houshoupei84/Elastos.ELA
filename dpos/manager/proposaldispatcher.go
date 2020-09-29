@@ -8,6 +8,7 @@ package manager
 import (
 	"bytes"
 	"errors"
+	"time"
 
 	"github.com/elastos/Elastos.ELA/blockchain"
 	"github.com/elastos/Elastos.ELA/common"
@@ -153,6 +154,7 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 		Result:       false,
 	}
 	p.cfg.EventMonitor.OnProposalArrived(&proposalEvent)
+	p.rejectProposal(proposal)
 	p.acceptProposal(proposal)
 }
 
@@ -329,7 +331,11 @@ func (p *ProposalDispatcher) ProcessProposal(id peer.PID, d *payload.DPOSProposa
 	}
 
 	if !p.proposalProcessFinished {
+		//
+		time.Sleep(3 * time.Second)
 		p.acceptProposal(d)
+		p.rejectProposal(d)
+
 	}
 
 	return true, true

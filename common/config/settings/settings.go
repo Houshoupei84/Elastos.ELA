@@ -492,6 +492,11 @@ func NewSettings() *Settings {
 		ConfigPath:   "PublicDPOSHeight",
 		ParamName:    "PublicDPOSHeight"})
 	result.Add(&settingItem{
+		Flag:         cmdcom.IllegalPenaltyFlag,
+		DefaultValue: uint32(0),
+		ConfigPath:   "IllegalPenalty",
+		ParamName:    "IllegalPenalty"})
+	result.Add(&settingItem{
 		Flag:         cmdcom.IllegalBehaviorPenaltyHeightFlag,
 		DefaultValue: uint32(0),
 		ConfigPath:   "IllegalBehaviorPenaltyHeight",

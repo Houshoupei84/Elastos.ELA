@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2020 The Elastos Foundation
 // Use of this source code is governed by an MIT
 // license that can be found in the LICENSE file.
-// 
+//
 
 package manager
 
@@ -224,16 +224,18 @@ func (i *IllegalBehaviorMonitor) sendIllegalVoteTransaction(
 
 func (i *IllegalBehaviorMonitor) ProcessIllegalVote(
 	first, second *payload.DPOSProposalVote) {
+	log.Warnf("[ProcessIllegalProposal] begin 1--------- %+v", first)
+	log.Warnf("[ProcessIllegalProposal] 2--------- %+v", second)
 
 	firstProposal, ok := i.cachedProposals[first.ProposalHash]
 	if !ok {
-		log.Warn("[ProcessIllegalVote] found proposal error")
+		log.Warn("[ProcessIllegalProposal] found firstProposal proposal error")
 		return
 	}
 
 	secondProposal, ok := i.cachedProposals[second.ProposalHash]
 	if !ok {
-		log.Warn("[ProcessIllegalVote] found proposal error")
+		log.Warn("[ProcessIllegalProposal] found secondProposal proposal error")
 		return
 	}
 
@@ -276,9 +278,13 @@ func (i *IllegalBehaviorMonitor) ProcessIllegalVote(
 	}
 
 	i.AddEvidence(evidences)
+	log.Warnf("[ProcessIllegalProposal] DPOSIllegalVotes evidences--------- %+v", evidences)
+
 	i.sendIllegalVoteTransaction(evidences)
 
 	m := &dmsg.IllegalVotes{Votes: *evidences}
+	log.Warnf("[ProcessIllegalProposal] BroadcastMessage DPOSIllegalVotes evidences--------- %+v", m)
+
 	i.dispatcher.cfg.Network.BroadcastMessage(m)
 }
 

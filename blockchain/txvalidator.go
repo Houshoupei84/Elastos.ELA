@@ -1117,7 +1117,7 @@ func (b *BlockChain) checkTxHeightVersion(txn *Transaction, blockHeight uint32) 
 		}
 
 	case CRCProposalReview, CRCProposalTracking, CRCAppropriation,
-	CRCProposalWithdraw:
+		CRCProposalWithdraw:
 		if blockHeight < b.chainParams.CRCommitteeStartHeight {
 			return errors.New("not support before CRCommitteeStartHeight")
 		}

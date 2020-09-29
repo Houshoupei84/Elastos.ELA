@@ -230,6 +230,10 @@ var (
 		Name:  "illegalbehaviorpenaltyheight",
 		Usage: "defines the height which illegal behavior will be penalty punished ",
 	}
+	IllegalPenaltyFlag = cli.StringFlag{
+		Name:  "illegalpenalty",
+		Usage: "defines the num of illegal penalty should be punished ",
+	}
 	CRCommitteeStartHeightFlag = cli.StringFlag{
 		Name:  "crcommitteestartheight",
 		Usage: "defines the height of CR Committee started",
