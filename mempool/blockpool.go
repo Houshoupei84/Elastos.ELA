@@ -86,8 +86,12 @@ func (bm *BlockPool) appendBlock(dposBlock *types.DposBlock) (bool, bool, error)
 			return false, false, err
 		}
 	}
+	log.Info("appendBlock " + dposBlock.Hash().String())
+	log.Info("appendBlock block.Hash " + block.Hash().String())
 
 	bm.blocks[block.Hash()] = block
+	log.Info("appendBlock  before confirmBlock " + dposBlock.Hash().String())
+	log.Infof("appendBlock  blocks %+v ", bm.blocks)
 
 	// confirm block
 	inMainChain, isOrphan, err := bm.confirmBlock(hash)
@@ -171,6 +175,7 @@ func (bm *BlockPool) ConfirmBlock(hash common.Uint256) (bool, bool, error) {
 
 func (bm *BlockPool) confirmBlock(hash common.Uint256) (bool, bool, error) {
 	log.Info("[ConfirmBlock] block hash:", hash)
+	log.Infof("confirmBlock  bm.blocks %+v ", bm.blocks)
 
 	block, ok := bm.blocks[hash]
 	if !ok {
