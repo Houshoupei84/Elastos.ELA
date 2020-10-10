@@ -62,6 +62,16 @@ type ArbiterInfo struct {
 	ClaimedDPOSNode bool
 }
 
+func (a *ArbiterInfo) String() string {
+
+	return fmt.Sprint("ArbiterInfo: {\n\t",
+		"IsNormal: ", a.IsNormal, "\n\t",
+		"IsCRMember: ", a.IsCRMember, "\n\t",
+		"ClaimedDPOSNode: ", a.ClaimedDPOSNode, "\n\t",
+		"NodePublicKey: ", common.BytesToHexString(a.NodePublicKey), "\n\t",
+		"}\n")
+}
+
 type arbitrators struct {
 	*State
 	*degradation
