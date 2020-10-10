@@ -236,15 +236,17 @@ func (h *DPOSHandlerSwitch) RecoverAbnormal(status *msg.ConsensusStatus) {
 }
 
 func (h *DPOSHandlerSwitch) OnViewChanged(isOnDuty bool) {
-	h.SwitchTo(isOnDuty)
-
-	firstBlockHash, ok := h.cfg.Manager.GetBlockCache().GetFirstArrivedBlockHash()
-	block, existBlock := h.cfg.Manager.GetBlockCache().TryGetValue(firstBlockHash)
-	if isOnDuty && (!ok ||
-		!existBlock || block.Height <= h.proposalDispatcher.GetFinishedHeight()) {
-		log.Warn("[OnViewChanged] firstBlockHash is nil")
-		return
-	}
-	log.Info("OnViewChanged, getBlock from first block hash:", firstBlockHash, "onduty:", isOnDuty)
-	h.ChangeView(&firstBlockHash)
+	//h.SwitchTo(isOnDuty)
+	//
+	//firstBlockHash, ok := h.cfg.Manager.GetBlockCache().GetFirstArrivedBlockHash()
+	//block, existBlock := h.cfg.Manager.GetBlockCache().TryGetValue(firstBlockHash)
+	//if isOnDuty && (!ok ||
+	//	!existBlock || block.Height <= h.proposalDispatcher.GetFinishedHeight()) {
+	//	log.Warn("[OnViewChanged] firstBlockHash is nil")
+	//	return
+	//}
+	//log.Info("OnViewChanged, getBlock from first block hash:", firstBlockHash, "onduty:", isOnDuty)
+	//h.ChangeView(&firstBlockHash)
+	h.proposalDispatcher.CleanProposals(true)
+	h.consensus.SetReady()
 }
