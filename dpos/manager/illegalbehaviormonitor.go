@@ -130,7 +130,7 @@ func (i *IllegalBehaviorMonitor) generateProposalEvidence(
 
 func (i *IllegalBehaviorMonitor) ProcessIllegalProposal(
 	first, second *payload.DPOSProposal) {
-
+	log.Info("ProcessIllegalProposal", first.BlockHash.String())
 	firstEvidence, err := i.generateProposalEvidence(first)
 	if err != nil {
 		log.Warn("[ProcessIllegalProposal] generate evidence error: ", err)
@@ -157,7 +157,7 @@ func (i *IllegalBehaviorMonitor) ProcessIllegalProposal(
 
 	i.AddEvidence(evidences)
 	i.sendIllegalProposalTransaction(evidences)
-
+	log.Info("Send Illegal Evidence")
 	m := &dmsg.IllegalProposals{Proposals: *evidences}
 	i.dispatcher.cfg.Network.BroadcastMessage(m)
 }
@@ -289,10 +289,11 @@ func (i *IllegalBehaviorMonitor) ProcessIllegalVote(
 }
 
 func (i *IllegalBehaviorMonitor) isProposalsIllegal(first, second *payload.DPOSProposal) bool {
+	log.Infof("first %v second %v", first, second)
 	if first == nil || second == nil {
 		return false
 	}
-
+	log.Info("first blockhash ", first.BlockHash.String(), " Second blockhash ", second.BlockHash.String())
 	if first.BlockHash.IsEqual(second.BlockHash) {
 		return false
 	}

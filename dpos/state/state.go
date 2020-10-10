@@ -1508,7 +1508,7 @@ func (s *State) processIllegalEvidence(payloadData types.Payload,
 				s.IllegalProducers[key] = producer
 				producer.activateRequestHeight = math.MaxUint32
 				//log.Errorf("processIllegalEvidence s.chainParams.IllegalBehaviorPenaltyHeight %v", s.chainParams.IllegalBehaviorPenaltyHeight)
-				log.Errorf("processIllegalEvidence IllegalPenalty %f", s.chainParams.IllegalPenalty)
+				log.Errorf("processIllegalEvidence IllegalPenalty %v", s.chainParams.IllegalPenalty)
 
 				if height >= s.chainParams.IllegalBehaviorPenaltyHeight {
 					producer.penalty += s.chainParams.IllegalPenalty

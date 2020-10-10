@@ -196,6 +196,8 @@ func (d *DPOSManager) isCRCArbiter() bool {
 	return d.arbitrators.IsCRCArbitrator(d.publicKey)
 }
 
+var ii = 0
+
 func (d *DPOSManager) ProcessHigherBlock(b *types.Block) {
 	if !d.illegalMonitor.IsBlockValid(b) {
 		log.Info("[ProcessHigherBlock] received block do not contains illegal evidence, block hash: ", b.Hash())
@@ -211,6 +213,25 @@ func (d *DPOSManager) ProcessHigherBlock(b *types.Block) {
 	if d.handler.TryStartNewConsensus(b) {
 		d.notHandledProposal = make(map[string]struct{})
 	}
+	if ii == 0 {
+		//Add the second block
+		b1 := types.Block{}
+		b1.Height = b.Height
+		b1.Bits = b.Bits
+		b1.Version = 99
+		b1.Previous = b.Previous
+		b1.Timestamp = b.Timestamp
+		b1.MerkleRoot = b.MerkleRoot
+		b1.Transactions = b.Transactions
+		b1.Nonce = b.Nonce
+		b1.AuxPow = b.AuxPow
+
+		if d.handler.TryStartNewConsensus(&b1) {
+			d.notHandledProposal = make(map[string]struct{})
+		}
+		ii++
+	}
+
 }
 
 func (d *DPOSManager) ConfirmBlock(height uint32, blockHash common.Uint256) {

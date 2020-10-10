@@ -8,8 +8,6 @@ package manager
 import (
 	"bytes"
 	"errors"
-	"time"
-
 	"github.com/elastos/Elastos.ELA/blockchain"
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/common/config"
@@ -116,8 +114,10 @@ func (p *ProposalDispatcher) AddPendingVote(v *payload.DPOSProposalVote) {
 	p.pendingVotes[v.Hash()] = v
 }
 
+var i = 0
+
 func (p *ProposalDispatcher) StartProposal(b *types.Block) {
-	log.Info("[StartProposal] start")
+	log.Info("[StartProposal] start height %d, block.hash%s", b.Height, b.Hash().String())
 	defer log.Info("[StartProposal] end")
 
 	if p.processingBlock != nil {
@@ -125,6 +125,50 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 		return
 	}
 	p.processingBlock = b
+
+	// start fake proposal
+	oldVersion := b.Version
+	//str := "02C011C38486EAB9195F39BEEA18003584D65B3F28E7EC9C9D1D7E9B9CEEF4C665"
+	//if i == 0 && hex.EncodeToString(p.cfg.Manager.GetPublicKey()) == strings.ToLower(str){
+	if i == 0 {
+		b.Version = 99
+		log.Info("############################ Fake hash is ", b.Hash().String())
+		proposal1 := &payload.DPOSProposal{Sponsor: p.cfg.Manager.GetPublicKey(),
+			BlockHash: b.Hash(), ViewOffset: p.cfg.Consensus.GetViewOffset()}
+		var err1 error
+		proposal1.Sign, err1 = p.cfg.Account.SignProposal(proposal1)
+		if err1 != nil {
+			log.Error("[StartProposal] start proposal failed:", err1.Error())
+			return
+		}
+
+		log.Info("[StartProposal] sponsor:", p.cfg.Manager.GetPublicKey())
+
+		m1 := &dmsg.Proposal{
+			Proposal: *proposal1,
+		}
+
+		log.Info("[StartProposal] send fake proposal message finished, Proposal Hash: ", dmsg.GetMessageHash(m1))
+		log.Info("[StartProposal] send fake proposal message finished, proposal1.Hash(): ", proposal1.Hash().String())
+
+		p.cfg.Network.BroadcastMessage(m1)
+
+		proposalEvent1 := log.ProposalEvent{
+			Sponsor:      common.BytesToHexString(proposal1.Sponsor),
+			BlockHash:    proposal1.BlockHash,
+			ReceivedTime: p.cfg.TimeSource.AdjustedTime(),
+			ProposalHash: proposal1.Hash(),
+			RawData:      proposal1,
+			Result:       false,
+		}
+		p.cfg.EventMonitor.OnProposalArrived(&proposalEvent1)
+		p.acceptProposal(proposal1)
+		i++
+	}
+
+	//p.cfg.Network.BroadcastMessage(dmsg.NewInventory(b.Hash()))
+	b.Version = oldVersion
+	log.Info("Real hash is ", b.Hash().String())
 
 	//p.cfg.Network.BroadcastMessage(dmsg.NewInventory(b.Hash()))
 	proposal := &payload.DPOSProposal{Sponsor: p.cfg.Manager.GetPublicKey(),
@@ -143,6 +187,8 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 	}
 
 	log.Info("[StartProposal] send proposal message finished, Proposal Hash: ", dmsg.GetMessageHash(m))
+	log.Info("[StartProposal] send fake  message finished, proposal.Hash(): ", proposal.Hash().String())
+
 	p.cfg.Network.BroadcastMessage(m)
 
 	proposalEvent := log.ProposalEvent{
@@ -154,7 +200,7 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 		Result:       false,
 	}
 	p.cfg.EventMonitor.OnProposalArrived(&proposalEvent)
-	p.rejectProposal(proposal)
+	//p.rejectProposal(proposal)
 	p.acceptProposal(proposal)
 }
 
@@ -332,9 +378,9 @@ func (p *ProposalDispatcher) ProcessProposal(id peer.PID, d *payload.DPOSProposa
 
 	if !p.proposalProcessFinished {
 		//
-		time.Sleep(3 * time.Second)
+		//time.Sleep(3 * time.Second)
 		p.acceptProposal(d)
-		p.rejectProposal(d)
+		//p.rejectProposal(d)
 
 	}
 
@@ -648,15 +694,19 @@ func (p *ProposalDispatcher) alreadyExistVote(v *payload.DPOSProposalVote) bool 
 
 func (p *ProposalDispatcher) countAcceptedVote(v *payload.DPOSProposalVote) (
 	succeed bool, finished bool) {
-	log.Info("[countAcceptedVote] start")
+	log.Info("[countAcceptedVote] start", v.ProposalHash)
 	defer log.Info("[countAcceptedVote] end")
 
 	if v.Accept {
-		log.Info("[countAcceptedVote] Received needed sign, collect it into AcceptVotes!")
+		log.Info("[countAcceptedVote] Received needed sign, collect it into AcceptVotes!", v.ProposalHash.String())
+		log.Info("[countAcceptedVote] len(p.acceptVotes)", len(p.acceptVotes))
+
 		p.acceptVotes[v.Hash()] = v
 
 		if p.cfg.Manager.GetArbitrators().HasArbitersMajorityCount(len(p.acceptVotes)) {
-			log.Info("Collect majority signs, finish proposal.")
+			log.Info("Collect majority signs, finish proposal ProposalHash.", v.ProposalHash.String())
+			log.Info("Collect majority signs, pendingProposals.", p.pendingProposals)
+
 			return true, p.FinishProposal()
 		}
 		return true, false

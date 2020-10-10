@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2020 The Elastos Foundation
 // Use of this source code is governed by an MIT
 // license that can be found in the LICENSE file.
-// 
+//
 
 package manager
 
@@ -235,15 +235,17 @@ func (h *DPOSHandlerSwitch) RecoverAbnormal(status *msg.ConsensusStatus) {
 }
 
 func (h *DPOSHandlerSwitch) OnViewChanged(isOnDuty bool) {
-	h.SwitchTo(isOnDuty)
-
-	firstBlockHash, ok := h.cfg.Manager.GetBlockCache().GetFirstArrivedBlockHash()
-	block, existBlock := h.cfg.Manager.GetBlockCache().TryGetValue(firstBlockHash)
-	if isOnDuty && (!ok ||
-		!existBlock || block.Height <= h.proposalDispatcher.GetFinishedHeight()) {
-		log.Warn("[OnViewChanged] firstBlockHash is nil")
-		return
-	}
-	log.Info("OnViewChanged, getBlock from first block hash:", firstBlockHash, "onduty:", isOnDuty)
-	h.ChangeView(&firstBlockHash)
+	//h.SwitchTo(isOnDuty)
+	//
+	//firstBlockHash, ok := h.cfg.Manager.GetBlockCache().GetFirstArrivedBlockHash()
+	//block, existBlock := h.cfg.Manager.GetBlockCache().TryGetValue(firstBlockHash)
+	//if isOnDuty && (!ok ||
+	//	!existBlock || block.Height <= h.proposalDispatcher.GetFinishedHeight()) {
+	//	log.Warn("[OnViewChanged] firstBlockHash is nil")
+	//	return
+	//}
+	//log.Info("OnViewChanged, getBlock from first block hash:", firstBlockHash, "onduty:", isOnDuty)
+	//h.ChangeView(&firstBlockHash)
+	h.proposalDispatcher.CleanProposals(true)
+	h.consensus.SetReady()
 }
