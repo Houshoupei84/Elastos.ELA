@@ -836,7 +836,7 @@ func (p *ProposalDispatcher) CreateRevertToDPOS(BlockHeight uint32) (
 	var err error
 	revertToDPOSPayload := &payload.RevertToDPOS{
 		WorkHeightInterval: payload.WorkHeightInterval,
-		//CurBlockHeight:     BlockHeight,
+		CurBlockHeight:     BlockHeight,
 	}
 	con := contract.Contract{Prefix: contract.PrefixMultiSig}
 	if con.Code, err = p.createRevertToDPOSRedeemScript(); err != nil {
