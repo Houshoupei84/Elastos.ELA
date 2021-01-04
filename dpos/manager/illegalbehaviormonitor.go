@@ -273,6 +273,8 @@ func (i *IllegalBehaviorMonitor) ProcessIllegalVote(
 			ProposalEvidence: *firstEvidence,
 		}
 	}
+	log.Warnf("#### [ProcessIllegalVote] found IllegalVotes")
+	log.Warnf("#### [ProcessIllegalVote] found IllegalVotes %+v", evidences)
 
 	i.AddEvidence(evidences)
 	i.sendIllegalVoteTransaction(evidences)
