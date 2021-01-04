@@ -30,7 +30,8 @@ func (h *DPOSNormalHandler) ProcessAcceptVote(id peer.PID, p *payload.DPOSPropos
 	if !ok {
 		h.proposalDispatcher.AddPendingVote(p)
 	} else if currentProposal.IsEqual(p.ProposalHash) {
-		return h.proposalDispatcher.ProcessVote(p, true)
+		//return h.proposalDispatcher.ProcessVote(p, true)
+		return false, false
 	}
 
 	return false, false
