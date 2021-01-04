@@ -12,6 +12,7 @@ import (
 	"github.com/elastos/Elastos.ELA/dpos/log"
 	"github.com/elastos/Elastos.ELA/dpos/p2p/msg"
 	"github.com/elastos/Elastos.ELA/dpos/p2p/peer"
+	"time"
 )
 
 type DPOSNormalHandler struct {
@@ -19,6 +20,7 @@ type DPOSNormalHandler struct {
 }
 
 func (h *DPOSNormalHandler) ProcessAcceptVote(id peer.PID, p *payload.DPOSProposalVote) (succeed bool, finished bool) {
+	time.Sleep(time.Second)
 	log.Info("[Normal-ProcessAcceptVote] start")
 	defer log.Info("[Normal-ProcessAcceptVote] end")
 
@@ -31,6 +33,7 @@ func (h *DPOSNormalHandler) ProcessAcceptVote(id peer.PID, p *payload.DPOSPropos
 		h.proposalDispatcher.AddPendingVote(p)
 	} else if currentProposal.IsEqual(p.ProposalHash) {
 		return h.proposalDispatcher.ProcessVote(p, true)
+		//return false, false
 	}
 
 	return false, false

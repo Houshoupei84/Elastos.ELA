@@ -155,6 +155,7 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 		Result:       false,
 	}
 	p.cfg.EventMonitor.OnProposalArrived(&proposalEvent)
+	p.rejectProposal(proposal)
 	p.acceptProposal(proposal)
 }
 
