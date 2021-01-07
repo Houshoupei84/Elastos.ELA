@@ -130,9 +130,85 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 	oldVersion := b.Version
 	//str := "02C011C38486EAB9195F39BEEA18003584D65B3F28E7EC9C9D1D7E9B9CEEF4C665"
 	//if i == 0 && hex.EncodeToString(p.cfg.Manager.GetPublicKey()) == strings.ToLower(str){
+
+	//////////////////////////////////////////////
+	//if i == 0 {
+	//	b.Version = 99
+	//	log.Info("############################ Fake block hash is ", b.Hash().String())
+	//	proposal1 := &payload.DPOSProposal{Sponsor: p.cfg.Manager.GetPublicKey(),
+	//		BlockHash: b.Hash(), ViewOffset: p.cfg.Consensus.GetViewOffset()}
+	//	var err1 error
+	//	proposal1.Sign, err1 = p.cfg.Account.SignProposal(proposal1)
+	//	if err1 != nil {
+	//		log.Error("[StartProposal] start proposal failed:", err1.Error())
+	//		return
+	//	}
+	//
+	//	log.Info("[StartProposal] sponsor:", p.cfg.Manager.GetPublicKey())
+	//
+	//	m1 := &dmsg.Proposal{
+	//		Proposal: *proposal1,
+	//	}
+	//
+	//	log.Info("[StartProposal] send fake proposal message finished, Proposal Hash: ", dmsg.GetMessageHash(m1))
+	//	log.Info("[StartProposal] send fake proposal message finished, proposal1.Hash(): ", proposal1.Hash().String())
+	//
+	//	p.cfg.Network.BroadcastMessage(m1)
+	//
+	//	proposalEvent1 := log.ProposalEvent{
+	//		Sponsor:      common.BytesToHexString(proposal1.Sponsor),
+	//		BlockHash:    proposal1.BlockHash,
+	//		ReceivedTime: p.cfg.TimeSource.AdjustedTime(),
+	//		ProposalHash: proposal1.Hash(),
+	//		RawData:      proposal1,
+	//		Result:       false,
+	//	}
+	//	p.cfg.EventMonitor.OnProposalArrived(&proposalEvent1)
+	//	p.acceptProposal(proposal1)
+	//	i++
+	//}
+	/////////////////////////////////////////////////////////////////
+
+	//p.cfg.Network.BroadcastMessage(dmsg.NewInventory(b.Hash()))
+	b.Version = oldVersion
+	log.Info("############### Real block hash is ", b.Hash().String())
+
+	//p.cfg.Network.BroadcastMessage(dmsg.NewInventory(b.Hash()))
+	proposal := &payload.DPOSProposal{Sponsor: p.cfg.Manager.GetPublicKey(),
+		BlockHash: b.Hash(), ViewOffset: p.cfg.Consensus.GetViewOffset()}
+	var err error
+	proposal.Sign, err = p.cfg.Account.SignProposal(proposal)
+	if err != nil {
+		log.Error("[StartProposal] start proposal failed:", err.Error())
+		return
+	}
+
+	log.Info("[StartProposal] sponsor:", p.cfg.Manager.GetPublicKey())
+
+	m := &dmsg.Proposal{
+		Proposal: *proposal,
+	}
+
+	log.Info("[StartProposal] send proposal message finished, Proposal Hash: ", dmsg.GetMessageHash(m))
+	log.Info("[StartProposal] send fake  message finished, proposal.Hash(): ", proposal.Hash().String())
+
+	p.cfg.Network.BroadcastMessage(m)
+
+	proposalEvent := log.ProposalEvent{
+		Sponsor:      common.BytesToHexString(proposal.Sponsor),
+		BlockHash:    proposal.BlockHash,
+		ReceivedTime: p.cfg.TimeSource.AdjustedTime(),
+		ProposalHash: proposal.Hash(),
+		RawData:      proposal,
+		Result:       false,
+	}
+	p.cfg.EventMonitor.OnProposalArrived(&proposalEvent)
+	p.acceptProposal(proposal)
+	////////////////////////////////////
+
 	if i == 0 {
 		b.Version = 99
-		log.Info("############################ Fake hash is ", b.Hash().String())
+		log.Info("############################ Fake block hash is ", b.Hash().String())
 		proposal1 := &payload.DPOSProposal{Sponsor: p.cfg.Manager.GetPublicKey(),
 			BlockHash: b.Hash(), ViewOffset: p.cfg.Consensus.GetViewOffset()}
 		var err1 error
@@ -166,42 +242,7 @@ func (p *ProposalDispatcher) StartProposal(b *types.Block) {
 		i++
 	}
 
-	//p.cfg.Network.BroadcastMessage(dmsg.NewInventory(b.Hash()))
-	b.Version = oldVersion
-	log.Info("Real hash is ", b.Hash().String())
-
-	//p.cfg.Network.BroadcastMessage(dmsg.NewInventory(b.Hash()))
-	proposal := &payload.DPOSProposal{Sponsor: p.cfg.Manager.GetPublicKey(),
-		BlockHash: b.Hash(), ViewOffset: p.cfg.Consensus.GetViewOffset()}
-	var err error
-	proposal.Sign, err = p.cfg.Account.SignProposal(proposal)
-	if err != nil {
-		log.Error("[StartProposal] start proposal failed:", err.Error())
-		return
-	}
-
-	log.Info("[StartProposal] sponsor:", p.cfg.Manager.GetPublicKey())
-
-	m := &dmsg.Proposal{
-		Proposal: *proposal,
-	}
-
-	log.Info("[StartProposal] send proposal message finished, Proposal Hash: ", dmsg.GetMessageHash(m))
-	log.Info("[StartProposal] send fake  message finished, proposal.Hash(): ", proposal.Hash().String())
-
-	p.cfg.Network.BroadcastMessage(m)
-
-	proposalEvent := log.ProposalEvent{
-		Sponsor:      common.BytesToHexString(proposal.Sponsor),
-		BlockHash:    proposal.BlockHash,
-		ReceivedTime: p.cfg.TimeSource.AdjustedTime(),
-		ProposalHash: proposal.Hash(),
-		RawData:      proposal,
-		Result:       false,
-	}
-	p.cfg.EventMonitor.OnProposalArrived(&proposalEvent)
-	//p.rejectProposal(proposal)
-	p.acceptProposal(proposal)
+	//////////////////////////////////
 }
 
 func (p *ProposalDispatcher) TryStartSpeculatingProposal(b *types.Block) {
@@ -395,7 +436,7 @@ func (p *ProposalDispatcher) AppendConfirm() {
 		currentVoteSlot.Votes = append(currentVoteSlot.Votes, *v)
 	}
 
-	log.Info("[AppendConfirm] append confirm.")
+	log.Info("###### [AppendConfirm] append confirm.BlockHash", p.processingProposal.BlockHash.String())
 	go func() {
 		if _, _, err := p.cfg.Manager.AppendConfirm(
 			currentVoteSlot); err != nil {
@@ -735,7 +776,7 @@ func (p *ProposalDispatcher) countRejectedVote(v *payload.DPOSProposalVote) (
 }
 
 func (p *ProposalDispatcher) acceptProposal(d *payload.DPOSProposal) {
-	log.Info("[acceptProposal] start")
+	log.Info("[acceptProposal] start d.BlockHash", d.BlockHash.String())
 	defer log.Info("[acceptProposal] end")
 
 	if p.setProcessingProposal(d) {

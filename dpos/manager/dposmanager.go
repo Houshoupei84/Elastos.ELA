@@ -500,7 +500,9 @@ func (d *DPOSManager) OnChangeView() {
 }
 
 func (d *DPOSManager) OnBlockReceived(b *types.Block, confirmed bool) {
-	log.Info("[OnBlockReceived] start b %+v", b)
+	log.Infof("[OnBlockReceived] start b %+v", b)
+	log.Infof("[OnBlockReceived] start b.Hash() ", b.Hash().String())
+
 	defer log.Info("[OnBlockReceived] end")
 
 	log.Info("[OnBlockReceived] start publicKey %+v", hex.EncodeToString(d.publicKey))
